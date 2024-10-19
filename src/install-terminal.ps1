@@ -1,4 +1,33 @@
-﻿param (
+﻿<#
+.SYNOPSIS
+    This script installs Windows Terminal from the specified GitHub repository.
+
+.DESCRIPTION
+    The install-terminal.ps1 script downloads and installs Windows Terminal from the specified GitHub repository.
+    If the working directory is not provided, the script will prompt the user to enter it.
+
+.PARAMETER repo
+    The GitHub repository from which to download Windows Terminal. Default is "microsoft/terminal".
+
+.PARAMETER workingDirectory
+    The directory where the Windows Terminal package will be downloaded and installed. If not provided, the script will prompt the user to enter it.
+
+.EXAMPLE
+    .\install-terminal.ps1 -repo "microsoft/terminal" -workingDirectory "C:\Path\To\WorkingDirectory"
+    Installs Windows Terminal from the "microsoft/terminal" repository to the specified working directory.
+
+.EXAMPLE
+    .\install-terminal.ps1 -workingDirectory "C:\Path\To\WorkingDirectory"
+    Installs Windows Terminal from the default "microsoft/terminal" repository to the specified working directory.
+
+.EXAMPLE
+    .\install-terminal.ps1 -repo "microsoft/terminal"
+    Installs Windows Terminal from the "microsoft/terminal" repository and prompts the user to enter the working directory.
+
+.NOTES
+    Make sure you are in the directory where the install-terminal.ps1 script is located or provide the correct relative path to the script.
+#>
+param (
     [string]$repo = "microsoft/terminal",
     [string]$workingDirectory
 )
@@ -24,14 +53,14 @@ if (-not $workingDirectory) {
 Install-WindowsTerminal -repo $repo -workingDirectory $workingDirectory
 
 <#
-Usage
-You can now run the script with command-line parameters like this:
+    To call the install-terminal.ps1 script from the command line, you can use the following PowerShell command:
 
-.\install-terminal.ps1 -repo "microsoft/terminal" -workingDirectory "C:\Path\To\WorkingDirectory"
-Or, if you want to use the default repository and prompt for the working directory:
+    With Both Parameters (repo and workingDirectory):
+    .\install-terminal.ps1 -repo "microsoft/terminal" -workingDirectory "C:\Path\To\WorkingDirectory"
+    With Default Repository and Specified Working Directory
+    .\install-terminal.ps1 -workingDirectory "C:\Path\To\WorkingDirectory"
+    With Default Working Directory and Specified Repository
+    .\install-terminal.ps1 -repo "microsoft/terminal"
 
-.\install-terminal.ps1 -workingDirectory "C:\Path\To\WorkingDirectory"
-Or, if you want to prompt for both parameters:
-
-.\install-terminal.ps1
+    Make sure you are in the directory where the install-terminal.ps1 script is located or provide the correct relative path to the script.
 #>

@@ -1,5 +1,38 @@
 # File: ..\tests\InstallTerminal.Tests.ps1
 
+<#
+.SYNOPSIS
+    Pester tests for the install-terminal.ps1 script.
+
+.DESCRIPTION
+    This test script uses Pester to validate the functionality of the install-terminal.ps1 script.
+    It sets up the necessary environment, mocks external dependencies, and verifies that the script behaves as expected.
+
+.SETUP
+    BeforeAll
+        Ensures the working directory exists.
+
+.CLEANUP
+    AfterAll
+        Removes the bin directory.
+
+.TESTCASES
+    It "should check if the module exists"
+        Verifies that the script checks for the existence of the module.
+
+    It "should exit if the module does not exist"
+        Verifies that the script exits if the module does not exist.
+
+    It "should import the module"
+        Verifies that the script imports the module.
+
+    It "should prompt for the working directory if not provided"
+        Verifies that the script prompts for the working directory if it is not provided.
+
+    It "should call Install-WindowsTerminal with correct parameters"
+        Verifies that the script calls Install-WindowsTerminal with the correct parameters.
+#>
+
 # Import the module to be tested
 Import-Module -Name "$PSScriptRoot\..\InstallTerminalModule.psm1"
 
@@ -74,5 +107,3 @@ Describe "install-terminal.ps1" {
         . $scriptPath -repo $repo -workingDirectory $workingDirectory
     }
 }
-
-# Invocation: Invoke-Pester -Script ".\tests\InstallTerminal.Tests.ps1"
