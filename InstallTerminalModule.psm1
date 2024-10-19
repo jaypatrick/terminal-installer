@@ -27,21 +27,21 @@ function Test-Url {
 # Function to install Windows Terminal
 function Install-WindowsTerminal {
     param (
+        [string]$repo,
         [string]$workingDirectory
     )
 
     # Get the latest terminal version
-    $repo = "microsoft/terminal"
     $terminalVersionString = Get-LatestReleaseVersion -repo $repo
 
     # terminal package strings
-    $terminalPackageUrl = "https://github.com/microsoft/terminal/releases/download/v$($terminalVersionString)/Microsoft.WindowsTerminal_$($terminalVersionString)_8wekyb3d8bbwe.msixbundle"
+    $terminalPackageUrl = "https://github.com/$repo/releases/download/v$($terminalVersionString)/Microsoft.WindowsTerminal_$($terminalVersionString)_8wekyb3d8bbwe.msixbundle"
     $terminalPackageOutName = "Microsoft.WindowsTerminal_$($terminalVersionString)_8wekyb3d8bbwe.msixbundle"
 
     # prerequisite strings
     $vcLibrariesPackageUrl = "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx"
     $vcLibrariesOutName = "Microsoft.VCLibs.x64.14.00.Desktop.appx"
-    $microsoftUiXamlUrl = "https://github.com/microsoft/terminal/releases/download/v$($terminalVersionString)/Microsoft.WindowsTerminal_$($terminalVersionString)_8wekyb3d8bbwe.msixbundle_Windows10_PreinstallKit.zip"
+    $microsoftUiXamlUrl = "https://github.com/$repo/releases/download/v$($terminalVersionString)/Microsoft.WindowsTerminal_$($terminalVersionString)_8wekyb3d8bbwe.msixbundle_Windows10_PreinstallKit.zip"
     $microsoftUiXamlOutName = "Microsoft.WindowsTerminal_$($terminalVersionString)_8wekyb3d8bbwe.msixbundle_Windows10_PreinstallKit.zip"
 
     $microsoftUiXamlFileExtensionToInstall = "*.msixbundle"
