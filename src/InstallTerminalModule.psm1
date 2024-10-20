@@ -4,6 +4,7 @@ Import-Module Appx
 # Function to get the latest release version from GitHub
 function Get-LatestReleaseVersion {
     param (
+        [Alias("r")]
         [string]$repo
     )
     $url = "https://api.github.com/repos/$repo/releases/latest"
@@ -14,6 +15,7 @@ function Get-LatestReleaseVersion {
 # Function to check if a URL exists
 function Test-Url {
     param (
+        [Alias("u")]
         [string]$url
     )
     try {
@@ -27,7 +29,8 @@ function Test-Url {
 # Function to install Windows Terminal
 function Install-WindowsTerminal {
     param (
-        [string]$workingDirectory
+        [Alias("wd", "dir")]
+        [string]$workingDirectory = "..\bin"
     )
 
     # Get the latest terminal version
@@ -57,7 +60,7 @@ function Install-WindowsTerminal {
 
     # Check if the terminal package URL exists
     if (-not (Test-Url -url $terminalPackageUrl)) {
-        Write-Host "The terminal package URL does not exist: $terminalPackageUrl"
+        Write-Host "The terminal package URL for version $terminalVersionString is not valid: $terminalPackageUrl"
         return
     }
 
@@ -91,3 +94,8 @@ function Install-WindowsTerminal {
     # Install Terminal
     Add-AppxPackage -Path $workingDirectory\$terminalPackageOutName
 }
+
+# Export-ModuleMember -Function * -Alias *
+# New-ModuleManifest -Path .\InstallTerminalModule.psd1 -ModuleVersion "0.6.3" -Author "Jayson Knight"
+# Test-ModuleManifest -Path .\InstallTerminalModule.psd1
+# To update, Update-ModuleManifest -Path .\InstallTerminalModule.psd1 -ModuleVersion "0.6.3" etc
