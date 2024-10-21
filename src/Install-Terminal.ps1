@@ -1,36 +1,50 @@
 param (
     [Alias("i", "I")]
     [switch]$Install,
-    [Alias("u","U")]
+    [Alias("u", "U")]
     [switch]$Uninstall
 )
-# params checks
-if ($PSBoundParameters.Count -gt 1) {
-    Write-Host "Please specify either -[I]nstall or -[U]ninstall and not both. This isn't Schrödinger's cat, it cannot exit in both states."
+
+# Parameter checks
+if ($PSBoundParameters.Count -eq 0) {
+    Write-Host "Please specify either -[I]nstall or -[U]ninstall."
+    exit
 }
-if ($PSBoundParameters.Count -lt 1) {
-    Write-Host "Please specify either -[I]nstall or -[U]ninstall and not nothing. You have to install something."
-}
-if ($PSBoundParameters.Count -lt 0) {
-    Write-Host "Inconceivable!"
+
+if ($Install -and $Uninstall) {
+    Write-Host "Please specify either -[I]nstall or -[U]ninstall, not both."
+    exit
 }
 
 # Import the InstallTerminalModule module
 Import-Module -Name "..\InstallTerminalModule.psm1"
 
-# Define parameters
-$repo = "microsoft/terminal"
+# Read configuration file
+try {
+    $config = Get-Config -configFilePath "..\config\terminal-config.json"
+    $repo = $config.terminalPackageRepo
+    $workingDirectory = "..\$($config.terminalWorkingDirectory)"
+} catch {
+    Write-Error "Failed to read configuration file. Error: $_"
+    exit
+}
+
 # Get the latest release version of Windows Terminal
-$latestVersion = Get-LatestReleaseVersion -repo $repo
-Write-Host "Latest Windows Terminal version: $latestVersion"
+try {
+    $latestVersion = Get-LatestReleaseVersion -repo $repo
+    Write-Host "Latest Windows Terminal version: $latestVersion"
+} catch {
+    Write-Error "Failed to get the latest release version. Error: $_"
+    exit
+}
 
 # Install or Uninstall Windows Terminal based on the provided parameter
 if ($Install) {
     Write-Host "Installing Windows Terminal..."
-    Install-WindowsTerminal -workingDirectory $workingDirectory
+    Install-WindowsTerminal -workingDirectory $workingDirectory -version $latestVersion
 } elseif ($Uninstall) {
     Write-Host "Uninstalling Windows Terminal..."
     Uninstall-WindowsTerminal -workingDirectory $workingDirectory
-}  else {
+} else {
     Write-Host "Please specify either -[I]nstall or -[U]ninstall."
 }

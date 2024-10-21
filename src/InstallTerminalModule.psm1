@@ -12,8 +12,23 @@ function Get-LatestReleaseVersion {
     return $response.tag_name.TrimStart('v')
 }
 
+function Get-TerminalConfig {
+    param (
+        [Alias("c")]
+        [string]$configFilePath = "..\config\terminal-config.json"
+    )
+
+    try {
+        $configContent = Get-Content -Path $configFilePath -Raw | ConvertFrom-Json
+        return $configContent
+    } catch {
+        Write-Error "Failed to read configuration file: $configFilePath. Error: $_"
+        throw
+    }
+}
+
 # Function to check if a URL exists
-function Test-Url {
+function Test-TerminalRepoUrl {
     param (
         [Alias("u")]
         [string]$url
@@ -28,6 +43,62 @@ function Test-Url {
     return Response.StatusCode -eq 200 ? $true : $false
 }
 
+function Test-OSVersion {
+    try {
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem
+        $version = [version]$os.Version
+        $requiredVersion = [version]"10.0.14393"  # Windows Server 2016 version
+
+        if ($version -ge $requiredVersion) {
+            return $true
+        } else {
+            return $false
+        }
+    } catch {
+        Write-Error "Failed to determine the operating system version. Error: $_"
+        return $false
+    }
+}
+
+# Function to create the working directory if it does not exist
+function New-WorkingDirectory {
+    param (
+        [string]$workingDirectory
+    )
+
+    try {
+        if (-not (Test-Path -Path $workingDirectory)) {
+            New-Item -ItemType Directory -Path $workingDirectory | Out-Null
+        }
+    } catch {
+        Write-Error "Failed to create working directory: $workingDirectory"
+        throw
+    }
+}
+
+# Function to set up terminal package variables
+function Get-TerminalPackageVariables {
+    param (
+        [string]$version
+    )
+
+    $terminalPackageRepo = "microsoft/terminal"
+    $terminalPackageName = "Microsoft.WindowsTerminal"
+    $terminalPackageHost = "https://github.com"
+    $terminalPackageID = "8wekyb3d8bbwe"
+    $terminalPackageType = "msixbundle"
+    $terminalPackageRoute = "releases/latest/v"
+
+    return @{
+        Repo = $terminalPackageRepo
+        Name = $terminalPackageName
+        Host = $terminalPackageHost
+        ID = $terminalPackageID
+        Type = $terminalPackageType
+        Route = $terminalPackageRoute
+    }
+}
+
 # Function to install Windows Terminal
 function Install-WindowsTerminal {
     param (
@@ -38,37 +109,55 @@ function Install-WindowsTerminal {
     )
 
     try {
-        # Create the working directory if it does not exist
-        if (-not (Test-Path -Path $workingDirectory)) {
-            New-Item -ItemType Directory -Path $workingDirectory | Out-Null
+        # Check if the operating system is Windows Server 2016 or newer
+        if (-not (Test-OSVersion)) {
+            Write-Host "This script requires Windows Server 2016 or newer."
+            exit
         }
     } catch {
-        Write-Host "Failed to create working directory: $workingDirectory"
+        Write-Error "An error occurred while checking the operating system version. Error: $_"
+        exit
+    }
+    try {
+        # Create the working directory if it does not exist
+        New-WorkingDirectory -workingDirectory $workingDirectory
+    } catch {
         return
     }
 
     try {
-        # Get the latest terminal version
-        $repo = "microsoft/terminal"
+        # Read configuration file
+        $config = Get-TerminalConfig -configFilePath "..\config\terminal-config.json"
+        $terminalPackageRepo = $config.terminalPackageRepo
+        $terminalPackageName = $config.terminalPackageName
+        $terminalPackageHost = $config.terminalPackageHost
+        $terminalPackageID = $config.terminalPackageID
+        $terminalPackageType = $config.terminalPackageType
+        $terminalPackageRoute = $config.terminalPackageRoute
+    } catch {
+        Write-Error "Failed to read configuration file. Error: $_"
+        return
+    }
         
-        $terminalVersionString = Get-LatestReleaseVersion -repo $repo
+        # Get the latest version string by scraping the GitHub API
+        $terminalVersionString = Get-LatestReleaseVersion -repo $terminalPackageRepo
 
-        # terminal package strings
-        $terminalPackageUrl = "https://github.com/microsoft/terminal/releases/download/v$($terminalVersionString)/Microsoft.WindowsTerminal_$($terminalVersionString)_8wekyb3d8bbwe.msixbundle"
-        $terminalPackageOutName = "Microsoft.WindowsTerminal_$($terminalVersionString)_8wekyb3d8bbwe.msixbundle"
+        # now build the terminal package strings
+        $terminalPackageUrl = "$terminalPackageHost/$terminalPackageRepo/$terminalPackageRoute$($terminalVersionString)/$terminalPackageName_$($terminalVersionString)_$terminalPackageID.$terminalPackageType"
+        $terminalPackageOutName = "$($terminalPackageName)_$($terminalVersionString)_$terminalPackageID.$terminalPackageType"
 
         # prerequisite strings
         $vcLibrariesPackageUrl = "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx"
         $vcLibrariesOutName = "Microsoft.VCLibs.x64.14.00.Desktop.appx"
-        $microsoftUiXamlUrl = "https://github.com/microsoft/terminal/releases/download/v$($terminalVersionString)/Microsoft.WindowsTerminal_$($terminalVersionString)_8wekyb3d8bbwe.msixbundle_Windows10_PreinstallKit.zip"
-        $microsoftUiXamlOutName = "Microsoft.WindowsTerminal_$($terminalVersionString)_8wekyb3d8bbwe.msixbundle_Windows10_PreinstallKit.zip"
+        $microsoftUiXamlUrl = "$terminalPackageHost/$terminalPackageRepo/$terminalPackageRoute$($terminalVersionString)/$terminalPackageName_$($terminalVersionString)_$terminalPackageID.msixbundle_Windows10_PreinstallKit.zip"
+        $microsoftUiXamlOutName = "$($terminalPackageName)_$($terminalVersionString)_$terminalPackageID.$($terminalPackageType)_Windows10_PreinstallKit.zip"
 
-        $microsoftUiXamlFileExtensionToInstall = "*.msixbundle"
+        $microsoftUiXamlFileExtensionToInstall = "*.$terminalPackageType"
 
         # Check if the terminal is already installed
-        $terminalPackageName = "Microsoft.WindowsTerminal"
         $installedPackage = Get-AppxPackage -Name $terminalPackageName -ErrorAction SilentlyContinue
 
+        # check if the package is already installed
         if ($installedPackage) {
             Write-Host "Windows Terminal is already installed. Version: $($installedPackage.Version)"
             return
@@ -76,20 +165,20 @@ function Install-WindowsTerminal {
 
         # Check if the terminal package URL exists
         Write-Host "Checking if the terminal package URL exists: $terminalPackageUrl"
-        if (-not (Test-Url -url $terminalPackageUrl)) {
+        if (-not (Test-TerminalRepoUrl -url $terminalPackageUrl)) {
             Write-Host "The terminal package URL for version $terminalVersionString is not valid (check the string format again. No letters allowed.): $terminalPackageUrl"
             return
         }
 
         # Check if the prerequisite URLs exist
         Write-Host "Checking if the VC Libraries package URL exists: $vcLibrariesPackageUrl"
-        if (-not (Test-Url -url $vcLibrariesPackageUrl)) {
+        if (-not (Test-TerminalRepoUrl -url $vcLibrariesPackageUrl)) {
             Write-Host "The VC Libraries package URL does not exist: $vcLibrariesPackageUrl"
             return
         }
 
         Write-Host "Checking if the Microsoft UI XAML package URL exists: $microsoftUiXamlUrl"
-        if (-not (Test-Url -url $microsoftUiXamlUrl)) {
+        if (-not (Test-TerminalRepoUrl -url $microsoftUiXamlUrl)) {
             Write-Host "The Microsoft UI XAML package URL does not exist: $microsoftUiXamlUrl"
             return
         }
@@ -175,7 +264,7 @@ function Install-WindowsTerminal {
                 Remove-Item -LiteralPath "$workingDirectory\$terminalPackageOutName" -Confirm:$false -Force
             }
     }
-}
+
 # Function to uninstall Windows Terminal
 function Uninstall-WindowsTerminal {
     param (

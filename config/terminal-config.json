@@ -1,0 +1,8 @@
+{
+    "terminalPackageRepo": "microsoft/terminal",
+    "terminalPackageName": "Microsoft.WindowsTerminal",
+    "terminalPackageHost": "https://github.com",
+    "terminalPackageID": "8wekyb3d8bbwe",
+    "terminalPackageType": "msixbundle",
+    "terminalPackageRoute": "releases/latest/v"
+}
