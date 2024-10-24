@@ -127,7 +127,7 @@ function Install-WindowsTerminal {
 
     try {
         # Read configuration file
-        $config = Get-TerminalConfig -configFilePath "..\config\terminal-config.json"
+        $config = Get-TerminalConfig -configFilePath "..\config\install-terminal.json"
         $terminalPackageRepo = $config.terminalPackageRepo
         $terminalPackageName = $config.terminalPackageName
         $terminalPackageHost = $config.terminalPackageHost
@@ -136,7 +136,7 @@ function Install-WindowsTerminal {
         $terminalPackageRoute = $config.terminalPackageRoute
     } catch {
         Write-Error "Failed to read configuration file. Error: $_"
-        return
+        throw
     }
         
         # Get the latest version string by scraping the GitHub API
