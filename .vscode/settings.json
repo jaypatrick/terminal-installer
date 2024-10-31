@@ -1,3 +1,4 @@
 {
-    "powershell.pester.codeLens": false
+    "powershell.pester.codeLens": false,
+    "azureAutomation.directory.basePath": "c:\\Users\\jayson.knight"
 }

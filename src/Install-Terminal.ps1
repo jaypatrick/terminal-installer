@@ -1,7 +1,7 @@
 param (
-    [Alias("i", "I")]
+    [Alias("i")]
     [switch]$Install,
-    [Alias("u", "U")]
+    [Alias("u")]
     [switch]$Uninstall
 )
 
@@ -17,7 +17,7 @@ if ($Install -and $Uninstall) {
 }
 
 # Import the InstallTerminalModule module
-Import-Module -Name "..\InstallTerminalModule.psm1"
+Import-Module -Name ".\Install-Terminal.psm1"
 
 # Read configuration file
 try {
@@ -46,5 +46,5 @@ if ($Install) {
     Write-Host "Uninstalling Windows Terminal..."
     Uninstall-WindowsTerminal -workingDirectory $workingDirectory
 } else {
-    Write-Host "Please specify either -[I]nstall or -[U]ninstall."
+    Write-Host "Please specify either -[i]nstall or -[u]ninstall."
 }
